@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Yuzhuo Cui">
-<meta name="dcterms.date" content="2026-11-10">
+<meta name="dcterms.date" content="2026-10-30">
 
 <title>Blog8: Simulation and Statistical Inference</title>
 <style>
@@ -36,6 +36,35 @@ ul.task-list li input[type="checkbox"] {
 <link href="WEEK8_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
 <link href="WEEK8_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
 
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
 
 </head>
 
@@ -64,7 +93,7 @@ ul.task-list li input[type="checkbox"] {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">November 10, 2026</p>
+      <p class="date">October 30, 2026</p>
     </div>
   </div>
   
@@ -78,50 +107,47 @@ ul.task-list li input[type="checkbox"] {
 
 <section id="introduction" class="level2">
 <h2 class="anchored" data-anchor-id="introduction">Introduction</h2>
-<p>Statistical inference is the process of drawing conclusions about a population based on a sample. But how do we know how much confidence to place in those conclusions?</p>
-<p>Formulas like standard errors and p-values are powerful, but they often feel like magic black boxes. To truly understand them, this post uses <strong>Monte Carlo simulation</strong> to visualize three foundational concepts in statistics: 1. How a <strong>Bootstrap Confidence Interval</strong> is constructed. 2. What it actually means for a 95% Confidence Interval to have 95% <strong>coverage</strong>. 3. How <strong>Hypothesis Testing</strong> and p-values work by simulating a null distribution.</p>
-<p>To make these concepts intuitive, I built an interactive Shiny App in R. The complete code is provided at the end of this post.</p>
+<p>A 95% confidence interval does not mean there is a 95% probability that the true parameter lies within <em>this specific interval</em>. Instead, it is a statement about the long-run frequency of the procedure: if we were to repeat the experiment many times, approximately 95% of the intervals we construct would contain the true parameter.</p>
+<p>This post uses interactive simulations to illustrate three core statistical concepts: 1. The Bootstrap method for constructing a confidence interval. 2. The concept of Coverage probability. 3. Hypothesis testing and the p-value.</p>
 </section>
-<section id="the-setup-a-known-population" class="level2">
-<h2 class="anchored" data-anchor-id="the-setup-a-known-population">The Setup: A Known Population</h2>
-<p>To verify our statistical methods, we first need a “truth.” The simulation below assumes a population that follows a normal distribution with a true mean ((= 100)) and a standard deviation ((= 15)).</p>
-<p>The goal of inference is to see if we can recover (= 100) using only a small sample.</p>
-</section>
-<section id="part-1-the-bootstrap-confidence-interval" class="level2">
-<h2 class="anchored" data-anchor-id="part-1-the-bootstrap-confidence-interval">Part 1: The Bootstrap Confidence Interval</h2>
-<p>If we don’t know the theoretical distribution of our data, how do we calculate a confidence interval? We use the <strong>Bootstrap</strong>.</p>
-<p>The logic is simple: if the sample is a good representation of the population, we can treat the sample <em>as</em> the population. We draw thousands of “resamples” from our original sample (with replacement) and calculate the mean of each resample.</p>
-<p>The interactive chart below shows the distribution of 1,000 bootstrap means drawn from a single sample of size (n=50).</p>
+<section id="part-1-the-bootstrap-method" class="level2">
+<h2 class="anchored" data-anchor-id="part-1-the-bootstrap-method">Part 1: The Bootstrap Method</h2>
+<p>Suppose we want to estimate the average height of students, but we only have one sample of size (n). The Bootstrap method allows us to estimate the sampling distribution by resampling with replacement from our observed data.</p>
+<p>By taking the 2.5th and 97.5th percentiles of the bootstrap distribution, we obtain a <strong>percentile bootstrap confidence interval</strong>. (Note: while percentile intervals are intuitive, more advanced methods like BCa intervals can be more robust when the bootstrap distribution is skewed).</p>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="images/shiny_bootstrap.png" class="img-fluid figure-img"></p>
+<p><img src="shiny_bootstrap.png" class="img-fluid figure-img"></p>
 <figcaption>Interactive Bootstrap Distribution</figcaption>
 </figure>
 </div>
 <p><strong>How to read the chart:</strong> - The <strong>black solid line</strong> is the true population mean ((= 100)). - The <strong>light blue histogram</strong> is the distribution of our 1,000 resampled means. - The <strong>red dashed lines</strong> represent the 95% Confidence Interval. We find these by taking the 2.5th and 97.5th percentiles of the bootstrap distribution.</p>
 <p>In the Shiny App, you can change the Confidence Level to 80% (the red lines will move closer together) or increase the number of simulations (the histogram will become smoother).</p>
 </section>
-<section id="part-2-what-does-95-confidence-actually-mean" class="level2">
-<h2 class="anchored" data-anchor-id="part-2-what-does-95-confidence-actually-mean">Part 2: What does “95% Confidence” actually mean?</h2>
-<p>Many people mistakenly believe that a 95% confidence interval means “there is a 95% chance that the true mean is inside <em>this specific interval</em>.” This is mathematically incorrect.</p>
-<p>The true meaning of frequentist confidence is about <strong>long-run coverage</strong>. If we repeated our experiment 100 times, drew 100 different samples, and calculated 100 different confidence intervals, we would expect about 95 of those intervals to contain the true mean.</p>
-<p>The chart below simulates exactly this. It runs 100 different trials, each with its own sample and confidence interval.</p>
+<section id="part-2-coverage-and-long-run-frequency" class="level2">
+<h2 class="anchored" data-anchor-id="part-2-coverage-and-long-run-frequency">Part 2: Coverage and Long-Run Frequency</h2>
+<p>To understand coverage, we simulate 100 different samples from a known population (with a true mean ()). For each sample, we calculate a confidence interval and plot it.</p>
+<blockquote class="blockquote">
+<p><em>Try re-running the simulation. The number of green lines will fluctuate slightly around 95—sometimes 93, sometimes 96. This is sampling variability.</em></p>
+</blockquote>
+<p>Because we are using a 95% confidence level, <strong>the expected number of intervals containing the true mean is 95</strong>. However, in any finite number of trials (e.g., 100), the exact count is a random variable. It is not guaranteed to be exactly 95.</p>
+<p><em>Methodological Note</em>: To emphasize the concept of coverage itself, the simulation panel in the Shiny app below uses the analytical z-interval (( {x} z )) rather than calculating a bootstrap interval 100 times. The coverage concept applies equally to bootstrap intervals, but the z-interval keeps the visualization fast and computationally simple.</p>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="images/shiny_coverage.png" class="img-fluid figure-img"></p>
+<p><img src="shiny_coverage.png" class="img-fluid figure-img"></p>
 <figcaption>Confidence Interval Coverage</figcaption>
 </figure>
 </div>
 <p><strong>How to read the chart:</strong> - Each horizontal line represents one experiment. - <strong>Green lines</strong> are intervals that successfully captured the true mean (100). - <strong>Red lines</strong> are the “failures” — intervals that missed the true mean. - The dashed black line is the true mean.</p>
-<p>Because we are using a 95% confidence level, exactly 95 of the lines should be green, and 5 should be red. In the Shiny App, you can change the Confidence Level to 80%; you will immediately see more red lines (20 out of 100).</p>
 </section>
-<section id="part-3-hypothesis-testing-and-p-values" class="level2">
-<h2 class="anchored" data-anchor-id="part-3-hypothesis-testing-and-p-values">Part 3: Hypothesis Testing and P-values</h2>
-<p>Finally, let’s look at hypothesis testing. Suppose our null hypothesis is (H_0: = 100). We want to know if our sample provides enough evidence to reject (H_0).</p>
-<p>To do this, we simulate the <strong>Null Distribution</strong>. We generate thousands of fake datasets <em>assuming the null hypothesis is true</em> (i.e., (= 100)), calculate a T-statistic for each, and plot the resulting distribution.</p>
+<section id="part-3-hypothesis-testing-and-the-null-distribution" class="level2">
+<h2 class="anchored" data-anchor-id="part-3-hypothesis-testing-and-the-null-distribution">Part 3: Hypothesis Testing and the Null Distribution</h2>
+<p>Hypothesis testing flips the question: instead of estimating a parameter, we assume the null hypothesis (H_0) is true and ask how likely our observed data would be under that assumption.</p>
+<p>In our simulation, we generate a null distribution by repeatedly drawing from a <strong>known normal population</strong> with (= 100) and (= 15) (our “true” parameters). For each simulated sample, we calculate the t-statistic.</p>
+<p><em>(Note: This is a parametric simulation. In real-world data analysis, where the population parameters are unknown, we would not be able to do this and would have to rely on theoretical t-distributions or non-parametric methods.)</em></p>
+<p>The p-value is the probability of observing a t-statistic as extreme as our actual data, assuming (H_0) is true. Visually, this visualization shows the one-sided right-tail p-value: it corresponds to the area under the curve to the right of the red line (the observed t-statistic). The Shiny app overlays the theoretical t-distribution curve to show how the simulated null distribution approximates it.</p>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="images/shiny_testing.png" class="img-fluid figure-img"></p>
+<p><img src="shiny_testing.png" class="img-fluid figure-img"></p>
 <figcaption>Hypothesis Testing</figcaption>
 </figure>
 </div>
@@ -133,111 +159,80 @@ ul.task-list li input[type="checkbox"] {
 <p>Simulation strips away the mystery of statistical inference.</p>
 <ol type="1">
 <li><strong>Bootstrap</strong> shows us how to construct confidence intervals without assuming a theoretical distribution.</li>
-<li><strong>Coverage simulations</strong> prove that a 95% confidence interval is a property of the <em>procedure</em>, not a single interval.</li>
+<li><strong>Coverage simulations</strong> illustrate that a 95% confidence interval is a property of the <em>procedure</em>, not a single interval.</li>
 <li><strong>Null distributions</strong> make p-values visual, showing exactly how rare our observed data would be if the null hypothesis were true.</li>
 </ol>
 </section>
 <section id="appendix-interactive-shiny-app-code" class="level2">
 <h2 class="anchored" data-anchor-id="appendix-interactive-shiny-app-code">Appendix: Interactive Shiny App Code</h2>
 <p>Below is the complete R code for the interactive Shiny application. If you have R installed, you can run this code locally to explore how changing the sample size, number of simulations, and confidence level affects the results.</p>
-<pre><code class="language-r">
-library(shiny)
-library(plotly)
-library(tidyverse)
-
-ui &lt;- fluidPage(
-  titlePanel("Interactive Statistical Inference Demo"),
-  sidebarLayout(
-    sidebarPanel(
-      sliderInput("n", "Sample Size (n):", min = 10, max = 200, value = 50),
-      sliderInput("sims", "Number of Bootstrap Simulations:", min = 100, max = 2000, value = 1000, step = 100),
-      sliderInput("conf", "Confidence Level:", min = 0.80, max = 0.99, value = 0.95, step = 0.01),
-      actionButton("resample", "Draw New Sample")
-    ),
-    mainPanel(
-      tabsetPanel(
-        tabPanel("1. Bootstrap Distribution", plotlyOutput("boot_plot")),
-        tabPanel("2. CI Coverage (Simulations)", plotlyOutput("coverage_plot")),
-        tabPanel("3. Hypothesis Testing", plotlyOutput("test_plot"))
-      )
-    )
-  )
-)
-
-server &lt;- function(input, output, session) {
-  true_mean &lt;- 100
-  true_sd &lt;- 15
-  
-  sample_data &lt;- eventReactive(input$resample, {
-    rnorm(input$n, mean = true_mean, sd = true_sd)
-  }, ignoreNULL = FALSE)
-  
-  output$boot_plot &lt;- renderPlotly({
+<p>```r library(shiny) library(plotly) library(tidyverse)</p>
+<p>ui &lt;- fluidPage( titlePanel(“Interactive Statistical Inference Demo”), sidebarLayout( sidebarPanel( sliderInput(“n”, “Sample Size (n):”, min = 10, max = 200, value = 50), sliderInput(“sims”, “Number of Bootstrap Simulations:”, min = 100, max = 2000, value = 1000, step = 100), sliderInput(“conf”, “Confidence Level:”, min = 0.80, max = 0.99, value = 0.95, step = 0.01), actionButton(“resample”, “Draw New Sample”) ), mainPanel( tabsetPanel( tabPanel(“1. Bootstrap Distribution”, plotlyOutput(“boot_plot”)), tabPanel(“2. CI Coverage (Simulations)”, plotlyOutput(“coverage_plot”)), tabPanel(“3. Hypothesis Testing”, plotlyOutput(“test_plot”)) ) ) ) )</p>
+<p>server &lt;- function(input, output, session) { true_mean &lt;- 100 true_sd &lt;- 15</p>
+<p>sample_data &lt;- eventReactive(input<span class="math inline">\(resample, {
+    rnorm(input\)</span>n, mean = true_mean, sd = true_sd) }, ignoreNULL = FALSE)</p>
+<p>output<span class="math inline">\(boot_plot &lt;- renderPlotly({
     data &lt;- sample_data()
-    boot_means &lt;- replicate(input$sims, mean(sample(data, replace = TRUE)))
-    alpha &lt;- (1 - input$conf) / 2
-    ci &lt;- quantile(boot_means, probs = c(alpha, 1 - alpha))
-    df &lt;- data.frame(boot_means = boot_means)
-    
-    p &lt;- ggplot(df, aes(x = boot_means)) +
-      geom_histogram(bins = 40, fill = "skyblue", color = "white") +
-      geom_vline(xintercept = ci[1], color = "red", linetype = "dashed", size = 1) +
-      geom_vline(xintercept = ci[2], color = "red", linetype = "dashed", size = 1) +
-      geom_vline(xintercept = true_mean, color = "black", size = 1.5) +
-      labs(title = "Bootstrap Distribution of the Mean",
-           subtitle = paste("True Mean vs ", input$conf*100, "% CI"),
-           x = "Bootstrap Sample Means", y = "Frequency") +
-      theme_minimal()
-    ggplotly(p)
-  })
-  
-  output$coverage_plot &lt;- renderPlotly({
+    boot_means &lt;- replicate(input\)</span>sims, mean(sample(data, replace = TRUE))) alpha &lt;- (1 - input$conf) / 2 ci &lt;- quantile(boot_means, probs = c(alpha, 1 - alpha)) df &lt;- data.frame(boot_means = boot_means)</p>
+<pre><code>p &lt;- ggplot(df, aes(x = boot_means)) +
+  geom_histogram(bins = 40, fill = "skyblue", color = "white") +
+  geom_vline(xintercept = ci[1], color = "red", linetype = "dashed", linewidth = 1) +
+  geom_vline(xintercept = ci[2], color = "red", linetype = "dashed", linewidth = 1) +
+  geom_vline(xintercept = true_mean, color = "black", linewidth = 1.5) +
+  labs(title = "Bootstrap Distribution of the Mean",
+       subtitle = paste("True Mean vs ", input$conf*100, "% CI"),
+       x = "Bootstrap Sample Means", y = "Frequency") +
+  theme_minimal()
+ggplotly(p)</code></pre>
+<p>})</p>
+<p>output<span class="math inline">\(coverage_plot &lt;- renderPlotly({
     trials &lt;- 100
     ci_df &lt;- data.frame(trial = 1:trials, lower = numeric(trials), upper = numeric(trials), covers = logical(trials))
-    alpha &lt;- (1 - input$conf) / 2
-    
-    for(i in 1:trials) {
-      x &lt;- rnorm(input$n, mean = true_mean, sd = true_sd)
-      m &lt;- mean(x)
-      se &lt;- sd(x) / sqrt(input$n)
-      z &lt;- qnorm(1 - alpha)
-      ci_df$lower[i] &lt;- m - z * se
-      ci_df$upper[i] &lt;- m + z * se
-      ci_df$covers[i] &lt;- (true_mean &gt;= ci_df$lower[i]) &amp; (true_mean &lt;= ci_df$upper[i])
-    }
-    
-    p &lt;- ggplot(ci_df, aes(x = trial, ymin = lower, ymax = upper, color = covers)) +
-      geom_linerange(size = 1) +
-      geom_hline(yintercept = true_mean, linetype = "dashed", color = "black", size = 1) +
-      scale_color_manual(values = c("TRUE" = "green", "FALSE" = "red"), guide = "none") +
-      labs(title = "Coverage of Confidence Intervals",
-           x = "Simulation Trial", y = "Confidence Interval") +
-      theme_minimal()
-    ggplotly(p)
-  })
-  
-  output$test_plot &lt;- renderPlotly({
-    x &lt;- sample_data()
-    obs_t &lt;- (mean(x) - true_mean) / (sd(x) / sqrt(input$n))
-    null_t &lt;- replicate(input$sims, {
-      x_null &lt;- rnorm(input$n, mean = true_mean, sd = true_sd)
-      (mean(x_null) - true_mean) / (sd(x_null) / sqrt(input$n))
-    })
-    df &lt;- data.frame(null_t = null_t)
-    
-    p &lt;- ggplot(df, aes(x = null_t)) +
-      geom_histogram(bins = 40, fill = "lightgray", color = "white", aes(y = ..density..)) +
-      stat_function(fun = dnorm, color = "blue", size = 1) +
-      geom_vline(xintercept = obs_t, color = "red", size = 1.5) +
-      labs(title = "Null Distribution and P-value",
-           x = "T-statistic", y = "Density") +
-      theme_minimal()
-    ggplotly(p)
-  })
+    alpha &lt;- (1 - input\)</span>conf) / 2</p>
+<pre><code>for(i in 1:trials) {
+  x &lt;- rnorm(input$n, mean = true_mean, sd = true_sd)
+  m &lt;- mean(x)
+  se &lt;- sd(x) / sqrt(input$n)
+  z &lt;- qnorm(1 - alpha)
+  ci_df$lower[i] &lt;- m - z * se
+  ci_df$upper[i] &lt;- m + z * se
+  ci_df$covers[i] &lt;- (true_mean &gt;= ci_df$lower[i]) &amp; (true_mean &lt;= ci_df$upper[i])
 }
 
-shinyApp(ui, server)
-</code></pre>
+p &lt;- ggplot(ci_df, aes(x = trial, ymin = lower, ymax = upper, color = covers)) +
+  geom_linerange(linewidth = 1) +
+  geom_hline(yintercept = true_mean, linetype = "dashed", color = "black", linewidth = 1) +
+  scale_color_manual(values = c("TRUE" = "green", "FALSE" = "red"), guide = "none") +
+  labs(title = "Coverage of Confidence Intervals",
+       x = "Simulation Trial", y = "Confidence Interval") +
+  theme_minimal()
+ggplotly(p)</code></pre>
+<p>})</p>
+<p>output<span class="math inline">\(test_plot &lt;- renderPlotly({
+    x &lt;- sample_data()
+    obs_t &lt;- (mean(x) - true_mean) / (sd(x) / sqrt(input\)</span>n)) null_t &lt;- replicate(input<span class="math inline">\(sims, {
+      x_null &lt;- rnorm(input\)</span>n, mean = true_mean, sd = true_sd) (mean(x_null) - true_mean) / (sd(x_null) / sqrt(input$n)) }) df &lt;- data.frame(null_t = null_t)</p>
+<pre><code># 稳健的边界计算，防止 obs_t 过大导致画图报错
+upper_xlim &lt;- max(max(null_t), obs_t + 1)
+
+p &lt;- ggplot(df, aes(x = null_t)) +
+  geom_histogram(bins = 40, fill = "lightgray", color = "white", aes(y = after_stat(density))) +
+  stat_function(
+    fun = dt, 
+    args = list(df = input$n - 1), 
+    geom = "area", 
+    fill = "red", 
+    alpha = 0.3, 
+    xlim = c(obs_t, upper_xlim) 
+  ) +
+  stat_function(fun = dt, args = list(df = input$n - 1), color = "blue", linewidth = 1) +
+  geom_vline(xintercept = obs_t, color = "red", linewidth = 1.5) +
+  labs(title = "Null Distribution and P-value (One-sided Right Tail)",
+       x = "T-statistic", y = "Density") +
+  theme_minimal()
+ggplotly(p)</code></pre>
+<p>}) }</p>
+<p>shinyApp(ui, server)</p>
 </section>
 
 </main>
